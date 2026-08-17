@@ -1,19 +1,25 @@
-import { generateTOTP } from './totp.js';
+import { deriveKey } from './vault.js';
+import { saveHOTPAccount, consumeHOTPCode } from './hotpVault.js';
 
-const DEMO_SECRET = 'JBSWY3DPEHPK3PXP'; // Base32 test key
+async function init() {
+  // Derive a master encryption key from user PIN/Passphrase
+  const masterKey = await deriveKey('user-passphrase-123', 'unique-salt-val');
+  const accountId = 'user@qubuhub.com';
 
-const tokenEl = document.querySelector('.js-token');
-const countdownEl = document.querySelector('.js-countdown');
+  // 1. Register new account (Secret: JBSWY3DPEHPK3PXP)
+  await saveHOTPAccount(accountId, 'JBSWY3DPEHPK3PXP', masterKey);
 
-async function render() {
-  try {
-    const { otp, secondsRemaining } = await generateTOTP(DEMO_SECRET);
-    tokenEl.textContent = `${otp.slice(0, 3)} ${otp.slice(3)}`;
-    countdownEl.textContent = `${secondsRemaining}s`;
-  } catch (err) {
-    console.error('TOTP Execution Error:', err);
-  }
+  // 2. User clicks "Generate Code" button
+  document.querySelector('#generate-btn').addEventListener('click', async () => {
+    try {
+      const { code, counterUsed, nextCounter } = await consumeHOTPCode(accountId, masterKey);
+      
+      console.log(`HOTP Code: ${code}`);
+      console.log(`Counter used: ${counterUsed} | Next counter: ${nextCounter}`);
+    } catch (err) {
+      console.error('Failed to generate HOTP:', err);
+    }
+  });
 }
 
-render();
-setInterval(render, 1000);
+init();
