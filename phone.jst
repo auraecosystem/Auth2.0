@@ -1,0 +1,64 @@
+$(document).ready(function () {
+  // Parse URL Parameters (e.g., ?secret=JBSWY3DPEHPK3PXP&issuer=qubuhub&account=user@abc.xyz)
+  function getQueryParams() {
+    var params = {};
+    window.location.search.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (str, key, value) {
+      params[key] = decodeURIComponent(value);
+    });
+    return params;
+  }
+
+  var params = getQueryParams();
+  var secret = params.secret || 'JBSWY3DPEHPK3PXP'; // Default demo secret
+  var issuer = params.issuer || 'qubuhub';
+  var account = params.account || '123@abc.xyz';
+
+  // Render Account & Issuer Metadata
+  $('.js-issuer').text(issuer);
+  $('.js-account-name').text(account);
+
+  /**
+   * Generates and renders current TOTP token string
+   */
+  function updateToken() {
+    try {
+      // Decode Base32 key using Unibabel
+      var keyHex = Unibabel.base32ToHex(secret);
+
+      // Calculate TOTP via botp library
+      var token = botp.totp(keyHex, {
+        time: Math.floor(Date.now() / 1000),
+        step: 30,
+        digits: 6
+      });
+
+      // Format token as 3-digit pairs: "123 456"
+      var formattedToken = token.slice(0, 3) + ' ' + token.slice(3);
+      $('.js-token').text(formattedToken);
+    } catch (err) {
+      $('.js-token').text('ERR KEY');
+      console.error('TOTP Generation Error:', err);
+    }
+  }
+
+  /**
+   * Syncs 30-second countdown display and triggers token refreshes
+   */
+  function startTimer() {
+    setInterval(function () {
+      var epoch = Math.floor(Date.now() / 1000);
+      var secondsRemaining = 30 - (epoch % 30);
+
+      $('.js-countdown').text(secondsRemaining + 's');
+
+      // Refresh token code when window resets
+      if (secondsRemaining === 30 || $('.js-token').text() === '--- ---') {
+        updateToken();
+      }
+    }, 1000);
+  }
+
+  // Initial Execution
+  updateToken();
+  startTimer();
+});
