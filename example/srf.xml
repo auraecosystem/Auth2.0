@@ -5,3 +5,8 @@
     </t:RequestSecurityToken>
   </s:Body>
 </s:Envelope>
+<dependency>
+    <groupId>com.warrenstrange</groupId>
+    <artifactId>webauthn</artifactId>
+    <version>1.4.0</version>
+</dependency>
