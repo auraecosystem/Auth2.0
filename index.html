@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self';" />
+    <title>Authenticator - qubuhub, Inc</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body class="fade">
+    <div class="phone-screen">
+      <div class="logo"></div>
+      <div class="token-issuer uppercase">your <span class="js-issuer">Company</span> token is:</div>
+      <div class="token-phone"><span class="js-token">--- ---</span></div>
+      <div class="js-countdown countdown">--s</div>
+      <div class="js-account-name account-name">123@abc.xyz</div>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
