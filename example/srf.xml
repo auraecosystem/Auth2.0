@@ -1,12 +1,6 @@
-<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope">
-  <s:Body>
-    <t:RequestSecurityToken xmlns:t="http://schemas.xmlsoap.org/ws/2005/02/trust">
-       <!-- details: username, password, appliesTo -->
-    </t:RequestSecurityToken>
-  </s:Body>
-</s:Envelope>
+<!-- Required Maven Dependency -->
 <dependency>
-    <groupId>com.warrenstrange</groupId>
-    <artifactId>webauthn</artifactId>
-    <version>1.4.0</version>
+    <groupId>com.yubico</groupId>
+    <artifactId>webauthn-server-core</artifactId>
+    <version>2.5.0</version>
 </dependency>
