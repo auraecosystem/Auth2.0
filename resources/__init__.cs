@@ -1,76 +1,72 @@
 // Language: C#
-
 using System;
 using System.Security.Cryptography;
 using System.Text;
 
-class TOTP
+public class HOTPGenerator
 {
-    // Generate a HOTP code
-    public static int GenerateHOTP(byte[] key, long counter, int digits = 6)
+    // Generate an HOTP code given a secret key and counter
+    public static string GenerateHOTP(string secret, long counter, int digits = 6)
     {
-        // Convert counter to byte array (big-endian)
+        // Decode secret key from base32
+        byte[] key = Base32Decode(secret);
+        
+        // Convert counter to big-endian byte array
         byte[] counterBytes = BitConverter.GetBytes(counter);
         if (BitConverter.IsLittleEndian)
             Array.Reverse(counterBytes);
 
-        // HMAC-SHA1 of key and counter
+        // Compute HMAC-SHA1
         using (HMACSHA1 hmac = new HMACSHA1(key))
         {
             byte[] hash = hmac.ComputeHash(counterBytes);
 
-            // Dynamic truncation
+            // Dynamic Truncation
             int offset = hash[hash.Length - 1] & 0x0F;
-            int binaryCode = ((hash[offset] & 0x7F) << 24) |
-                             ((hash[offset + 1] & 0xFF) << 16) |
-                             ((hash[offset + 2] & 0xFF) << 8) |
-                             (hash[offset + 3] & 0xFF);
+            int binaryCode = ((hash[offset] & 0x7F) << 24)
+                            | ((hash[offset + 1] & 0xFF) << 16)
+                            | ((hash[offset + 2] & 0xFF) << 8)
+                            | (hash[offset + 3] & 0xFF);
 
-            // Get the OTP
+            // Generate the OTP
             int otp = binaryCode % (int)Math.Pow(10, digits);
-            return otp;
+            return otp.ToString(new string('0', digits));
         }
     }
 
-    // Generate a TOTP code based on time
-    public static int GenerateTOTP(string base32Secret, int digits = 6, int timeStep = 30)
-    {
-        byte[] key = Base32Decode(base32Secret);
-        long counter = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / timeStep;
-        return GenerateHOTP(key, counter, digits);
-    }
-
-    // Simple Base32 decoder
-    public static byte[] Base32Decode(string base32)
+    // Helper function to decode Base32 encoded strings
+    private static byte[] Base32Decode(string input)
     {
         const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-        base32 = base32.TrimEnd('=').ToUpperInvariant();
-        int arraySize = base32.Length * 5 / 8;
-        byte[] bytes = new byte[arraySize];
+        input = input.TrimEnd('=').ToUpperInvariant();
 
-        int bitBuffer = 0, bitsInBuffer = 0, byteIndex = 0;
-        foreach (char c in base32)
+        byte[] bytes = new byte[input.Length * 5 / 8];
+        int bitBuffer = 0, bitsLeft = 0, byteIndex = 0;
+
+        foreach (char c in input)
         {
             int val = alphabet.IndexOf(c);
-            if (val < 0) continue;
+            if (val < 0) throw new ArgumentException("Invalid base32 character.");
 
             bitBuffer = (bitBuffer << 5) | val;
-            bitsInBuffer += 5;
+            bitsLeft += 5;
 
-            if (bitsInBuffer >= 8)
+            if (bitsLeft >= 8)
             {
-                bytes[byteIndex++] = (byte)((bitBuffer >> (bitsInBuffer - 8)) & 0xFF);
-                bitsInBuffer -= 8;
+                bytes[byteIndex++] = (byte)((bitBuffer >> (bitsLeft - 8)) & 0xFF);
+                bitsLeft -= 8;
             }
         }
-
         return bytes;
     }
 
-    static void Main()
+    // Example Usage
+    public static void Main()
     {
-        string secret = "JBSWY3DPEHPK3PXP"; // Example Base32 secret
-        int totp = GenerateTOTP(secret);
-        Console.WriteLine($"TOTP: {totp:D6}");
+        string secretKey = "JBSWY3DPEHPK3PXP"; // base32-encoded secret
+        long counter = 1; // counter value (HOTP counter)
+        
+        string otp = GenerateHOTP(secretKey, counter, 6);
+        Console.WriteLine($"HOTP for counter {counter}: {otp}");
     }
 }
